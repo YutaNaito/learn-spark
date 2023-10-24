@@ -1,7 +1,7 @@
 /**
  * Illustrates a simple flatMap in Java to extract the words
  */
-package nttdata.sample.spark;
+package learn.spark.sample.spark;
 
 import java.util.Arrays;
 import java.util.Iterator;
