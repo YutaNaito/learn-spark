@@ -1,7 +1,7 @@
 /**
  * Illustrates joining two csv files
  */
-package nttdata.sample.spark;
+package learn.spark.sample.spark;
 
 import java.io.StringReader;
 import java.util.Arrays;
