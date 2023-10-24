@@ -1,7 +1,7 @@
 /**
  * Illustrates loading a json file and finding out if people like pandas
  */
-package nttdata.sample.spark;
+package learn.spark.sample.spark;
 
 import java.io.StringReader;
 import java.util.ArrayList;
