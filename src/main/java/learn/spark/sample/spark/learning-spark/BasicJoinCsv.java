@@ -31,9 +31,9 @@ public class BasicJoinCsv {
   }
 
   public static void main(String[] args) throws Exception {
-		if (args.length != 2) {
+    if (args.length != 2) {
       throw new Exception("Usage BasicJoinCsv sparkMaster csv1 csv2");
-		}
+    }
     String csv1 = args[0];
     String csv2 = args[1];
     BasicJoinCsv jsv = new BasicJoinCsv();
@@ -50,5 +50,5 @@ public class BasicJoinCsv {
     JavaPairRDD<Integer, String[]> keyedRDD2 = csvFile1.mapToPair(new ParseLine());
     JavaPairRDD<Integer, Tuple2<String[], String[]>> result = keyedRDD1.join(keyedRDD2);
     List<Tuple2<Integer, Tuple2<String[], String[]>>> resultCollection = result.collect();
-	}
+  }
 }
