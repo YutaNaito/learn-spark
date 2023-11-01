@@ -21,22 +21,22 @@ import org.apache.spark.sql.SparkSession;
 public class BasicFlatMap {
   public static void main(String[] args) throws Exception {
 
-		if (args.length != 2) {
+    if (args.length != 1) {
       throw new Exception("Usage BasicFlatMap sparkMaster inputFile");
-		}
+    }
 
     SparkConf sparkConf = new SparkConf().setAppName("BasicFlatMap");
     JavaSparkContext sc = new JavaSparkContext(sparkConf);
     SparkSession sparkSession = SparkSession.builder().config(sparkConf).getOrCreate();
-    JavaRDD<String> rdd = sc.textFile(args[1]);
-    JavaRDD<String> words = rdd.flatMap(new FlatMapFunction<String, String>() { 
-        @Override 
-        public Iterator<String> call(String x) { 
-          return Arrays.asList(x.split(" ")).iterator(); 
-        }
+    JavaRDD<String> rdd = sc.textFile(args[0]);
+    JavaRDD<String> words = rdd.flatMap(new FlatMapFunction<String, String>() {
+      @Override
+      public Iterator<String> call(String x) {
+        return Arrays.asList(x.split(" ")).iterator();
+      }
     });
     Map<String, Long> result = words.countByValue();
-    for (Entry<String, Long> entry: result.entrySet()) {
+    for (Entry<String, Long> entry : result.entrySet()) {
       System.out.println(entry.getKey() + ":" + entry.getValue());
     }
   }
