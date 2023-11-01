@@ -25,13 +25,16 @@ public final class BasicAvgWithKryo {
       total_ = 0;
       num_ = 0;
     }
+
     public AvgCount(int total, int num) {
       total_ = total;
       num_ = num;
     }
+
     public float avg() {
       return total_ / (float) num_;
     }
+
     public int total_;
     public int num_;
   }
@@ -43,12 +46,6 @@ public final class BasicAvgWithKryo {
   }
 
   public static void main(String[] args) throws Exception {
-		String master;
-		if (args.length > 0) {
-      master = args[0];
-		} else {
-			master = "local";
-		}
 
     SparkConf sparkConf = new SparkConf().setAppName("BasicAvgWithKyro");
     sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
@@ -73,8 +70,8 @@ public final class BasicAvgWithKryo {
         return a;
       }
     };
-    AvgCount initial = new AvgCount(0,0);
+    AvgCount initial = new AvgCount(0, 0);
     AvgCount result = rdd.aggregate(initial, addAndCount, combine);
     System.out.println(result.avg());
-	}
+  }
 }
