@@ -53,7 +53,6 @@ public class BasicLoadJson {
     }
   }
 
-
   public static class WriteJson implements FlatMapFunction<Iterator<Person>, String> {
     public Iterator<String> call(Iterator<Person> people) throws Exception {
       ArrayList<String> text = new ArrayList<String>();
@@ -67,12 +66,11 @@ public class BasicLoadJson {
   }
 
   public static void main(String[] args) throws Exception {
-		if (args.length != 3) {
+    if (args.length != 2) {
       throw new Exception("Usage BasicLoadJson [sparkMaster] [jsoninput] [jsonoutput]");
-		}
-    String master = args[0];
-    String fileName = args[1];
-    String outfile = args[2];
+    }
+    String fileName = args[0];
+    String outfile = args[1];
 
     SparkConf sparkConf = new SparkConf().setAppName("BasicLoadJson");
     JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -81,5 +79,5 @@ public class BasicLoadJson {
     JavaRDD<Person> result = input.mapPartitions(new ParseJson()).filter(new LikesPandas());
     JavaRDD<String> formatted = result.mapPartitions(new WriteJson());
     formatted.saveAsTextFile(outfile);
-	}
+  }
 }
