@@ -17,16 +17,18 @@ import org.apache.spark.sql.SparkSession;
 import org.eclipse.jetty.client.ContentExchange;
 import org.eclipse.jetty.client.HttpClient;
 
-public final class BasicAvgMapPartitions {
-  class AvgCount {
+public final class BasicAvgMapPartitions implements Serializable {
+  class AvgCount implements Serializable {
     public AvgCount() {
       total_ = 0;
       num_ = 0;
     }
+
     public AvgCount(Integer total, Integer num) {
       total_ = total;
       num_ = num;
     }
+
     public AvgCount merge(Iterable<Integer> input) {
       for (Integer elem : input) {
         num_ += 1;
@@ -34,9 +36,13 @@ public final class BasicAvgMapPartitions {
       }
       return this;
     }
+
     public Integer total_;
     public Integer num_;
-    public float avg() { return total_ / (float)num_; }
+
+    public float avg() {
+      return total_ / (float) num_;
+    }
   }
 
   public static void main(String[] args) throws Exception {
@@ -47,34 +53,38 @@ public final class BasicAvgMapPartitions {
   public void run() {
     SparkConf sparkConf = new SparkConf().setAppName("BasicAvgMapPartitions");
     JavaSparkContext sc = new JavaSparkContext(sparkConf);
-    SparkSession sparkSession =
-        SparkSession.builder().config(sparkConf).getOrCreate();
+    SparkSession sparkSession = SparkSession.builder().config(sparkConf).getOrCreate();
     JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(1, 2, 3, 4, 5));
-    FlatMapFunction<Iterator<Integer>, AvgCount> setup =
-        new FlatMapFunction<Iterator<Integer>, AvgCount>() {
-          @Override
-          public Iterator<AvgCount> call(Iterator<Integer> input) {
-            AvgCount a = new AvgCount(0, 0);
-            while (input.hasNext()) {
-              a.total_ += input.next();
-              a.num_ += 1;
-            }
-            ArrayList<AvgCount> ret = new ArrayList<AvgCount>();
-            ret.add(a);
-            return ret.iterator();
-          }
-        };
-    Function2<AvgCount, AvgCount, AvgCount> combine =
-        new Function2<AvgCount, AvgCount, AvgCount>() {
-          @Override
-          public AvgCount call(AvgCount a, AvgCount b) {
-            a.total_ += b.total_;
-            a.num_ += b.num_;
-            return a;
-          }
-        };
+    FlatMapFunction<Iterator<Integer>, AvgCount> setup = new FlatMapFunction<Iterator<Integer>, AvgCount>() {
+      @Override
+      public Iterator<AvgCount> call(Iterator<Integer> input) {
+        AvgCount a = new AvgCount(0, 0);
+        while (input.hasNext()) {
+          a.total_ += input.next();
+          a.num_ += 1;
+        }
+        ArrayList<AvgCount> ret = new ArrayList<AvgCount>();
+        ret.add(a);
+        return ret.iterator();
+      }
+    };
+    Function2<AvgCount, AvgCount, AvgCount> combine = new Function2<AvgCount, AvgCount, AvgCount>() {
+      @Override
+      public AvgCount call(AvgCount a, AvgCount b) {
+        a.total_ += b.total_;
+        a.num_ += b.num_;
+        return a;
+      }
+    };
 
-    AvgCount result = rdd.mapPartitions(setup).reduce(combine);
-    System.out.println(result.avg());
+    JavaRDD<AvgCount> resultRdd = rdd.mapPartitions(setup);
+    for (AvgCount avg : resultRdd.collect()) {
+      System.out.println("RDD >> count : " + avg.num_ + ", sum : " + avg.total_ + ", average :" + avg.avg());
+    }
+
+    AvgCount result = resultRdd.reduce(combine);
+    System.out.println("count : " + result.num_ + ", sum : " + result.total_ + ", average :" + result.avg());
+
+    sc.close();
   }
 }
