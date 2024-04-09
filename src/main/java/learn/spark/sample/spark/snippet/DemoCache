@@ -1,0 +1,87 @@
+package sample.spark;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+import org.apache.spark.storage.StorageLevel;
+
+public class DemoCache {
+    public static void main(String[] args) {
+        SparkSession spark = SparkSession.builder().appName("DemoCache").getOrCreate();
+
+        System.out.println("//----- インスタンスを再生成しないケース -----//");
+        // 同じインスタンスで複数回メソッドを呼びケース
+        Processor processor1 = new Processor(spark);
+        processor1.get(1, "/data/demo_cache_data1.csv");
+        processor1.get(1, "/data/demo_cache_data1.csv");
+        processor1.get(1, "/data/demo_cache_data1.csv");
+        processor1.get(2, "/data/demo_cache_data2.csv");
+        processor1.get(2, "/data/demo_cache_data2.csv");
+        processor1.get(3, "/data/demo_cache_data3.csv");
+        processor1.get(3, "/data/demo_cache_data3.csv");
+        processor1.get(1, "/data/demo_cache_data1.csv");
+        processor1.get(1, "/data/demo_cache_data1.csv");
+
+        System.out.println("//----- インスタンスを再生成するケース -----//");
+        // インスタンスを再生成して複数回メソッドを呼ぶケース
+        Processor processor2 = new Processor(spark);
+        processor2.get(1, "/data/demo_cache_data1.csv");
+        processor2 = new Processor(spark);
+        processor2.get(1, "/data/demo_cache_data1.csv");
+        processor2 = new Processor(spark);
+        processor2.get(1, "/data/demo_cache_data1.csv");
+        processor2 = new Processor(spark);
+        processor2.get(2, "/data/demo_cache_data2.csv");
+        processor2 = new Processor(spark);
+        processor2.get(2, "/data/demo_cache_data2.csv");
+        processor2 = new Processor(spark);
+        processor2.get(3, "/data/demo_cache_data3.csv");
+        processor2 = new Processor(spark);
+        processor2.get(3, "/data/demo_cache_data3.csv");
+        processor2 = new Processor(spark);
+        processor2.get(1, "/data/demo_cache_data1.csv");
+        processor2 = new Processor(spark);
+        processor2.get(1, "/data/demo_cache_data1.csv");
+
+        spark.stop();
+    }
+
+    public static class Processor {
+        private final SparkSession _spark;
+
+        public Processor(SparkSession spark) {
+            _spark = spark;
+        }
+
+        public void get(int id, String path) {
+
+            // csvをロードしてDatasetを作成
+            Dataset<Row> df = _spark.read().format("csv").option("header", "true").option("inferSchema", "true")
+                    .load(path);
+
+            if (df.storageLevel() == StorageLevel.NONE()) {
+                // cacheの有無を確認し、なければcacheする
+                System.out.println("cacheされたデータがないため、cacheします。");
+                df.cache();
+            } else {
+                if (!String.valueOf(id).equals(df.first().getAs("id").toString())) {
+                    // cacheされているデータが使用するidのと一致するか確認し、古いデータであれば再cacheする
+                    System.out.println("cacheされたデータが古いため再cacheします。");
+                    df.cache();
+                } else {
+                    System.out.println("cache済みのデータがあるため再cacheはしません。");
+                }
+            }
+
+            df.first();
+            df.show();
+        }
+    }
+}
